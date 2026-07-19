@@ -1,7 +1,7 @@
 {
-  "name": "tiktuk-camera-bot",
+  "name": "tikwahm-camera-bot",
   "version": "5.1.0",
-  "description": "TikTuk Camera Bot - Telegram Bot built with Node.js",
+  "description": "tikwahm Camera Bot - Telegram Bot built with Node.js",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

